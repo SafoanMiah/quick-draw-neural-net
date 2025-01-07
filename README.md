@@ -1,3 +1,3 @@
 Work in progress...
 
-Deep Convilutional Neural Network based on the [quick draw data](https://quickdraw.withgoogle.com/data) to classify drawings.
+Deep Convolutional Neural Network based on the [quick draw data](https://quickdraw.withgoogle.com/data) to classify drawings.
