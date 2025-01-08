@@ -1,0 +1,122 @@
+https://www.kaggle.com/code/aleksandradeis/getting-started-with-pytorch-for-quick-draw
+https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/Quick%20Draw%20Report.pdf
+
+1. Input Layer
+What It Does:
+
+This layer tells the model what kind of data to expect (e.g., a 28x28 grayscale image).
+It normalizes the data so all values are between 0 and 1 (by dividing pixel values by 255).
+In Your Project:
+
+Ensures your Quick Draw images are in the right shape and scale for the model to process.
+Explain to a Kid:
+
+"Imagine drawing on a 28x28 tiny grid. This layer helps the computer understand your drawing by organizing the grid and making sure it doesn’t get confused by big numbers."
+2. Convolutional Layers
+What They Do:
+
+They find patterns in the image, like lines, edges, or curves, by sliding tiny windows (filters) over the image.
+Different filters look for different patterns.
+In Your Project:
+
+Helps the model find the shapes that make up Quick Draw objects, like the curve of a smiley face or the line of a square.
+Explain to a Kid:
+
+"It’s like a magnifying glass that looks at small parts of your drawing to spot shapes or patterns, like a straight line or a circle."
+3. Batch Normalization
+What It Does:
+
+Balances the data after each layer, so no part is too big or too small.
+Makes training faster and more stable.
+In Your Project:
+
+Ensures the patterns found in one Quick Draw image don’t overshadow others during training.
+Explain to a Kid:
+
+"It’s like organizing your toy box so that every toy is in the right place, making it easier to find what you need."
+4. Pooling Layers
+What They Do:
+
+Shrinks the size of the image while keeping important patterns.
+Reduces how much the model needs to remember.
+In Your Project:
+
+Keeps the important parts of Quick Draw images (like the smile in a smiley face) while getting rid of unnecessary details.
+Explain to a Kid:
+
+"Imagine taking a photo and zooming out, so it’s smaller but you can still tell what’s in it."
+5. Dropout Layers
+What They Do:
+
+During training, randomly ignores some neurons (connections) so the model doesn’t depend too much on specific patterns.
+In Your Project:
+
+Prevents the model from memorizing Quick Draw images instead of learning general shapes.
+Explain to a Kid:
+
+"It’s like practicing soccer with some players missing, so you learn to play well as a team even if someone is absent."
+6. Flatten Layer
+What It Does:
+
+Turns the 2D grid of features into a long 1D list.
+In Your Project:
+
+Prepares the patterns found in the Quick Draw image for the final decision-making layers.
+Explain to a Kid:
+
+"It’s like taking all the pages of a book and putting them in one long row to read them one by one."
+7. Fully Connected (Dense) Layers
+What They Do:
+
+Combines all the patterns to decide what the image is.
+In Your Project:
+
+Takes the features from earlier layers and predicts the Quick Draw object (e.g., cat, car, or chair).
+Explain to a Kid:
+
+"It’s like using everything you’ve learned about the drawing to guess what it is—‘Oh, this is a cat!’"
+8. Regularization
+What It Does:
+
+Prevents the model from getting too confident about specific details, forcing it to generalize better.
+L2 Regularization: Adds a penalty for large weights (too much focus on one thing).
+Early Stopping: Stops training when the model stops improving.
+In Your Project:
+
+Helps your model not get stuck on weird quirks in Quick Draw images and ensures it works well on new drawings.
+Explain to a Kid:
+
+"It’s like not overthinking! You stop practicing when you’ve learned enough and don’t focus too much on one tricky part."
+9. Output Layer
+What It Does:
+
+Produces the final result, like class probabilities (e.g., 80% cat, 20% chair).
+In Your Project:
+
+Tells you what the Quick Draw object is.
+Explain to a Kid:
+
+"It’s like shouting out your final guess: ‘It’s a cat!’"
+10. ReLU (Rectified Linear Unit)
+What It Does:
+
+Keeps positive numbers as they are but changes negative numbers to 0.
+Helps the model learn non-linear patterns.
+In Your Project:
+
+Ensures the model can learn complex patterns in Quick Draw drawings without being slowed down by negatives.
+Explain to a Kid:
+
+"It’s like turning off a switch for anything below zero, but keeping the good stuff."
+Summary for Your Project
+Input Layer: Prepares Quick Draw images for processing.
+Convolutional Layers: Spot shapes and patterns.
+Batch Normalization: Keeps learning balanced.
+Pooling Layers: Simplifies the image while keeping important parts.
+Dropout Layers: Ensures the model doesn’t memorize drawings.
+Flatten Layer: Gets the features ready for decision-making.
+Fully Connected Layers: Combines everything to make the final prediction.
+Regularization: Keeps the model from overthinking.
+Output Layer: Makes the final guess.
+ReLU: Keeps learning quick and smooth.
+Would you like to start implementing the simple version of this or tweak it further?
