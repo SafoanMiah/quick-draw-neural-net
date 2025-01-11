@@ -4,6 +4,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from scipy.ndimage import rotate
 
+from torch.utils.data import DataLoader
+
+import torch
+
 def load_data(dir: str, file_standardize: bool = False, sample: bool = False, sample_size: int = 1) -> pd.DataFrame:
     '''
     Load data from every .npy files in `dir` directory, and stack them onto one dataframe.
@@ -96,3 +100,56 @@ def augment_data(df: pd.DataFrame, rot: bool = False, angle: int = 15, h_flip: b
         
     print(f'Augmented size: {augmented.shape}')
     return augmented
+
+def to_tensors_batch(df: pd.DataFrame, X: str = 'features', y: str = 'labels'):
+    
+    '''
+    Normalize objects convert the dataframe into tensor objects
+    
+    args:
+    - df: dataframe to convert
+    - X: column name for features
+    - y: column name for labels
+    
+    returns: features, labels, labels_map
+    '''
+    
+    unique = df[y].unique()
+    labels_map = {}
+    
+    for n, cat in enumerate(unique):
+        labels_map[cat] = n # mapping category to integer, eg: alarm_clock -> 0, shoe -> 1
+        
+    df[y] = df[y].map(labels_map)
+    
+    features = torch.tensor(np.array(df[X].tolist()))
+    labels = torch.tensor([x for x in df[y]])
+    
+    features = features.float() / 255.0 # normalizing 0-255 -> 0-1
+    features = features.unsqueeze(1) # adding channel dimension for CNN
+    
+    return features, labels, labels_map
+
+def split_batch(df: pd.DataFrame, batch_size: int = 64):
+    
+    '''
+    Split the dataframe into train, test, and validation sets
+    Turn the sets into DataLoader objects
+    
+    args:
+    - df: dataframe to split
+    - batch_size: size of the batch
+    
+    returns: train_loader, test_loader, val_loader
+    '''
+    
+    train_data, test_data = train_test_split(df, test_size=0.2, random_state=0)
+    val_data, test_data = train_test_split(test_data, test_size=0.5, train_size=0.5, random_state=0)
+    
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+    
+    return train_loader, test_loader, val_loader
+
+
