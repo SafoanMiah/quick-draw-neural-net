@@ -84,13 +84,9 @@ This project involves building a Deep Convolutional Neural Network (CNN) to clas
 
 The `QuickDrawCNN_V2 XL` model, trained on an augmented dataset, demonstrated the best performance, indicating that data augmentation is crucial for improving model generalization. This model will be used for deployment via a Web API.
 
-## Future Work
-
-- Explore additional data augmentation techniques.
-- Implement a web interface for real-time drawing classification.
-
 ## References
 - [Quick Draw Dataset](https://quickdraw.withgoogle.com/data)
+- [Kaggle Competition](https://www.kaggle.com/competitions/quickdraw-doodle-recognition)
 - [Aleksandra Deis](https://www.kaggle.com/code/aleksandradeis/getting-started-with-pytorch-for-quick-draw)
 
 _Note: The accuracies may vary slightly on re-runs due to the stochastic nature of training._
