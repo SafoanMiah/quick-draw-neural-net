@@ -1,5 +1,11 @@
 # Quick Draw Neural Network
 
+## WIP Status 🏗️
+- [x] Data Processing Pipeline
+- [x] Model Architecture Development
+- [-] Full Training & Evaluation
+- [ ] Web API Development
+
 ## Overview
 
 This project involves building a Deep Convolutional Neural Network (CNN) to classify drawings from the [Quick Draw Dataset](https://quickdraw.withgoogle.com/data). The dataset consists of 50 million drawings across 345 categories, contributed by players of the game Quick, Draw!.
