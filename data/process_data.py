@@ -148,16 +148,16 @@ def to_tensors(df: pd.DataFrame, X: str = 'features', y: str = 'labels'):
         
     df[y] = df[y].map(labels_map)
     
-    features = torch.tensor(np.array(df[X].progress_apply(lambda x: x.tolist())))
-    labels = torch.tensor([x for x in df[y]])
+    features_array = np.array([x for x in df[X]]) # due to tensor conversion being slow, convert to numpy first
+    labels_array = np.array([x for x in df[y]])
     
-    features = features.float() / 255.0 # normalizing 0-255 -> 0-1
+    features = torch.tensor(features_array) / 255.0 # normalizing 0-255 -> 0-1
     features = features.unsqueeze(1) # adding channel dimension for CNN
+    labels = torch.tensor(labels_array)
     
     print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
     
     return features, labels, labels_map
-
 
 
 
