@@ -70,13 +70,13 @@ This project involves building a Deep Convolutional Neural Network (CNN) to clas
 | Linear        | (n_classes)  | 2,570      |
 
 ### Heatmap Visualization
-![Heatmap of all images in a sample categories](image.png)
+![Heatmap of all images in a sample categories](https://github.com/user-attachments/assets/fc2ef6c3-7790-4daf-81fa-1881a332971e)
 
 ### Augmented Examples
-![Augmentation of starting image](image-1.png)
+![Augmentation of starting image](https://github.com/user-attachments/assets/3c352400-b1bd-43f2-80eb-867edc8fab32)
 
 ### Training and Validation Metrics
-![Model training and validation metrics](image-3.png)
+![Model training and validation metrics](https://github.com/user-attachments/assets/11bed997-2548-4419-866c-2c0bb4f342f5)
 
 ## Conclusion
 
