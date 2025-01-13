@@ -3,7 +3,7 @@
 ## WIP Status 🏗️
 - [x] Data Processing Pipeline
 - [x] Model Architecture Development
-- [-] Full Training & Evaluation
+- [ ] Full Training & Evaluation
 - [ ] Web API Development
 
 ## Overview
