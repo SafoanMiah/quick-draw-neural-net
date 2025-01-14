@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 tqdm.pandas()
 
-def load_data(categories: list, dir: str, file_standardize: bool = False, sample: bool = False, sample_size: int = 1) -> pd.DataFrame:
+def load_data(categories: list, dir: str, file_standardize: bool = False, sample: int = None):
     '''
     Load data from every .npy files in `dir` directory, and stack them onto one dataframe.
     
@@ -18,11 +18,14 @@ def load_data(categories: list, dir: str, file_standardize: bool = False, sample
     - categories: list of directories where the files are stored
     - dir: directory where the files are store
     - file_standardize: if True, the function will standarize the file    
-    - sample: if True, the function will return a sample of the data
-    - sample_size: size of the sample, as a percentage of the total data
+    - sample: instead of doin the whole dataset, take a sample
     
-    returns: dataframe: pd.DataFrame
+    returns:
+    - features: numpy array with the features
+    - labels: list with the labels
     '''
+    
+    num_categories = len(categories)
 
     # if needed standarize the file names
     if file_standardize:
@@ -30,30 +33,89 @@ def load_data(categories: list, dir: str, file_standardize: bool = False, sample
             os.rename(dir + filename, dir + filename.replace(" ", "_").lower())
             
     if sample:
-        categories = categories[: (len(categories)//100 * sample_size) ]
+        categories = categories[: (num_categories//100 * sample) ]
     
-    print(f"Loading {len(categories)} categories...")
+    print(f"Loading {num_categories} categories...")
     
     # iterate over all files in the dirs and add to a dataframe
-    dataframe = pd.DataFrame()
-    temp_df = []
+    
+    features = []
+    labels = []
 
     for cat in tqdm(categories, desc="Loading data"):
-        data = pd.DataFrame(np.load(os.path.join(dir, cat)))
-        data["category"] = cat
-        temp_df.append(data)
+        data = np.load(os.path.join(dir + cat))
+        features.append(data)
+        labels.append(cat)
         
-    dataframe = pd.concat(temp_df, ignore_index=True)
+    features = np.vstack(features)
+    labels = np.array(labels)
     
-    print(f"Data loaded, size: {dataframe.shape}")
+    print(f"Data loaded, size: {features.shape}")
+    return features, labels
+
+
+
+
+
+def preprocess_data(features: np.array, labels: np.array, reshape_size: tuple = (28, 28)):
     
-    return dataframe
+    '''
+    Preprocess the data by reshaping the features and removing the .npy extension from the labels
+    
+    args:
+    - features: numpy array with the features
+    - labels: numpy array with the labels
+    - reshape_size: size to reshape the features
+    
+    returns: preprocessed dataframe
+    '''
+    
+    print(f"Preprocessing {len(labels)} images...")
+    
+    features = features.reshape(-1, *reshape_size) # leaves first dimension as is, reshapes the rest to 28x28
+    labels = [labels[i].split(".")[0] for i in tqdm(range(len(labels)), desc="Processing labels")] # remove .npy extension
+
+    return features, labels
 
 
 
 
 
-def augment_data(df: pd.DataFrame, rot: bool = False, angle: int = 15, h_flip: bool = False, v_flip: bool = False) -> pd.DataFrame:
+def to_tensors(features: np.array, labels: np.array):
+    
+    '''
+    Normalize objects convert the features and labels into tensor objects
+    
+    args:
+    - features: numpy array with the features
+    - labels: numpy array with the labels
+    
+    returns: features, labels, labels_map
+    '''
+    
+    print(f"Converting {len(labels)} images to tensors...")
+    
+    unique = np.unique(labels)
+    labels_map = {}
+
+    for n, cat in enumerate(unique):
+        labels_map[cat] = n # mapping category to integer, eg: alarm_clock -> 0, shoe -> 1
+        
+    labels = [labels_map[label] for label in labels] # convert labels to integers
+    
+    features = torch.tensor(features) / 255.0 # normalizing 0-255 -> 0-1
+    features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
+    labels = torch.tensor(labels)
+    
+    print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
+    
+    return features, labels, labels_map
+
+
+
+
+
+def augment_data(features: np.array, labels: np.array, rot: bool = False, angle: int = 15, h_flip: bool = False, v_flip: bool = False) -> tuple:
     
     '''
     Augment the data using the following optional techniques:
@@ -62,102 +124,49 @@ def augment_data(df: pd.DataFrame, rot: bool = False, angle: int = 15, h_flip: b
     - Flipping the image vertically
     
     args:
-    df: dataframe to augment
+    features: numpy array with the features
+    labels: numpy array with the labels
     rot: rotate the image
     angle: degrees to rotate the image
     h_flip: flip the image horizontally
     v_flip: flip the image vertically
     
-    returns: augmented dataframe
+    returns: augmented features and labels
     '''
     
-    print(f'Starting size: {df.shape}')
+    print(f'Starting size: {features.shape}')
     
-    augmented = pd.DataFrame()
+    augmented_features = [features]
+    augmented_labels = [labels]
+    
+    
     
     # rotating image by `angle` degrees
     if rot:
         print(f"Rotating images by {angle} degrees...")
-        df_rot = df.copy()
-        df_rot['features'] = df_rot['features'].progress_apply(lambda x: rotate(x, angle, reshape=False))
-        augmented = pd.concat([augmented, df_rot], ignore_index=True)
+        rotated_features = np.array([rotate(img, angle, reshape=False) for img in tqdm(features, desc="Rotating images...")])
+        augmented_features.append(rotated_features) # append the rotated images to the list of augmented
+        augmented_labels.append(labels) # append the labels to the list of augmented
         
     # flipping image horizontally
     if h_flip:
         print("Flipping images horizontally...")
-        df_hflip = df.copy()
-        df_hflip['features'] = df_hflip['features'].progress_apply(lambda x: x[:, ::-1])
-        augmented = pd.concat([augmented, df_hflip], ignore_index=True)
+        hflipped_features = np.array([np.fliplr(img) for img in tqdm(features, desc="Flipping images horizontally...")])
+        augmented_features.append(hflipped_features)
+        augmented_labels.append(labels)
         
     # flipping image vertically
     if v_flip:
         print("Flipping images vertically...")
-        df_vflip = df.copy()
-        df_vflip['features'] = df_vflip['features'].progress_apply(lambda x: x[::-1, :])
-        augmented = pd.concat([augmented, df_vflip], ignore_index=True)
+        vflipped_features = np.array([np.flipud(img) for img in tqdm(features, desc="Flipping images vertically...")])
+        augmented_features.append(vflipped_features)
+        augmented_labels.append(labels)
         
-    print(f'Augmented size: {augmented.shape}')
-    return augmented
-
-
-
-
-def preprocess_data(df: pd.DataFrame):
+    augmented_features = np.concatenate(augmented_features)
+    augmented_labels = np.concatenate(augmented_labels)
     
-    '''
-    Preprocess the data by reshaping the features and removing the .npy extension from the labels
-    
-    args:
-    - df: dataframe to preprocess
-    
-    returns: preprocessed dataframe
-    '''
-    
-    print(f"Preprocessing {df.shape[0]} images...")
-    
-    processed = pd.DataFrame()
-    processed["labels"] = df["category"].progress_apply(lambda x: x.split(".")[0]) # remove .npy extension
-    processed["features"] = df.iloc[:, :-1].progress_apply(lambda x: np.array(x).reshape(28,28), axis=1) # reshape to 28x28
-    
-    return processed
-
-
-
-
-
-def to_tensors(df: pd.DataFrame, X: str = 'features', y: str = 'labels'):
-    
-    '''
-    Normalize objects convert the dataframe into tensor objects
-    
-    args:
-    - df: dataframe to convert
-    - X: column name for features
-    - y: column name for labels
-    
-    returns: features, labels, labels_map
-    '''
-    
-    print(f"Converting {df.shape[0]} images to tensors...")
-    
-    unique = df[y].unique()
-    labels_map = {}
-    
-    for n, cat in enumerate(unique):
-        labels_map[cat] = n # mapping category to integer, eg: alarm_clock -> 0, shoe -> 1
-        
-    df[y] = df[y].map(labels_map)
-    
-    features_array = np.array([x for x in df[X]]) # due to tensor conversion being slow, convert to numpy first
-    labels_array = np.array([x for x in df[y]])
-    
-    features = torch.tensor(features_array) / 255.0 # normalizing 0-255 -> 0-1
-    features = features.unsqueeze(1) # adding channel dimension for CNN
-    labels = torch.tensor(labels_array)
-    
-    print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
-    
-    return features, labels, labels_map
+    print(f'Augmented size: {augmented_features.shape}')
+    return augmented_features, augmented_labels
 
 
 
