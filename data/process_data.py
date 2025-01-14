@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 tqdm.pandas()
 
-def load_data(categories: list, dir: str, file_standardize: bool = False, sample: int = None):
+def load_data(categories: list, dir: str, file_standardize: bool = False, sample: int = 0):
     '''
     Load data from every .npy files in `dir` directory, and stack them onto one dataframe.
     
@@ -34,8 +34,9 @@ def load_data(categories: list, dir: str, file_standardize: bool = False, sample
             
     if sample:
         categories = categories[: (num_categories//100 * sample) ]
-    
-    print(f"Loading {num_categories} categories...")
+        print(f"Loading {num_categories//100 * sample} categories...")
+    else:
+        print(f"Loading {num_categories} categories...")
     
     # iterate over all files in the dirs and add to a dataframe
     
@@ -81,7 +82,7 @@ def preprocess_data(features: np.array, labels: np.array, reshape_size: tuple = 
 
 
 
-def to_tensors(features: np.array, labels: np.array):
+def to_tensors(features: np.array, labels: np.array, labels_map: dict, device: str = 'cpu'):
     
     '''
     Normalize objects convert the features and labels into tensor objects
@@ -89,33 +90,29 @@ def to_tensors(features: np.array, labels: np.array):
     args:
     - features: numpy array with the features
     - labels: numpy array with the labels
+    - labels_map: dictionary with the labels mapping
+    - device: device to use
     
     returns: features, labels, labels_map
     '''
     
-    print(f"Converting {len(labels)} images to tensors...")
-    
-    unique = np.unique(labels)
-    labels_map = {}
-
-    for n, cat in enumerate(unique):
-        labels_map[cat] = n # mapping category to integer, eg: alarm_clock -> 0, shoe -> 1
+    print(f"Converting {len(labels)} images to tensors, using {device}...")
         
     labels = [labels_map[label] for label in labels] # convert labels to integers
     
-    features = torch.tensor(features) / 255.0 # normalizing 0-255 -> 0-1
+    features = torch.tensor(features).to(device) / 255.0 # normalizing 0-255 -> 0-1
     features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
-    labels = torch.tensor(labels)
+    labels = torch.tensor(labels).to(device)
     
     print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
     
-    return features, labels, labels_map
+    return features, labels
 
 
 
 
 
-def augment_data(features: np.array, labels: np.array, rot: bool = False, angle: int = 15, h_flip: bool = False, v_flip: bool = False) -> tuple:
+def augment_data(features: np.array, labels: np.array, rot: int = 0, h_flip: bool = False, v_flip: bool = False) -> tuple:
     
     '''
     Augment the data using the following optional techniques:
@@ -126,8 +123,7 @@ def augment_data(features: np.array, labels: np.array, rot: bool = False, angle:
     args:
     features: numpy array with the features
     labels: numpy array with the labels
-    rot: rotate the image
-    angle: degrees to rotate the image
+    rot: rotate the image by angle
     h_flip: flip the image horizontally
     v_flip: flip the image vertically
     
@@ -138,13 +134,12 @@ def augment_data(features: np.array, labels: np.array, rot: bool = False, angle:
     
     augmented_features = [features]
     augmented_labels = [labels]
+
     
-    
-    
-    # rotating image by `angle` degrees
+    # rotating image by `rot` degrees
     if rot:
-        print(f"Rotating images by {angle} degrees...")
-        rotated_features = np.array([rotate(img, angle, reshape=False) for img in tqdm(features, desc="Rotating images...")])
+        print(f"Rotating images by {rot} degrees...")
+        rotated_features = np.array([rotate(img, rot, reshape=False) for img in tqdm(features, desc="Rotating images...")])
         augmented_features.append(rotated_features) # append the rotated images to the list of augmented
         augmented_labels.append(labels) # append the labels to the list of augmented
         
