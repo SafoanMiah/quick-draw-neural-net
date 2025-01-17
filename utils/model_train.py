@@ -27,7 +27,7 @@ def check_last_n(values: list, n:int = 3, delta:int = 0.5) -> bool:
         return False
 
 
-def train(model, train_loader, val_loader, epochs, criterion, optimizer, device, patience=3, min_delta=0.5):
+def train(model, train_loader, val_loader, epochs, criterion, optimizer, device, patience=3, min_delta=0.1):
     '''
     Train a PyTorch model with added verbosity using tqdm.
     

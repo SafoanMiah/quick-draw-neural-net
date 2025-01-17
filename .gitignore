@@ -1,6 +1,5 @@
 # Image numpy bitmap files, too large to be stored in git
 data/
-./temp-batched.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
