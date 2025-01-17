@@ -3,241 +3,159 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from scipy.ndimage import rotate
 
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, ConcatDataset
 import torch
 from tqdm import tqdm
 
-tqdm.pandas()
 
-def load_data(categories: list, dir: str, file_standardize: bool = False, sample: int = 0):
+
+
+def load_data(dir: str, category: str, file_standardize: bool = False, verbose: bool = False):
+    
     '''
-    Load data from every .npy files in `dir` directory, and stack them onto one dataframe.
+    Load the bitmaps data from the directory
     
     args:
-    - categories: list of directories where the files are stored
-    - dir: directory where the files are store
-    - file_standardize: if True, the function will standarize the file    
-    - sample: instead of doin the whole dataset, take a sample
+    - dir: directory path
+    - category: category of the data
+    - file_standardize: standardize the file names
     
-    returns:
-    - features: numpy array with the features
-    - labels: list with the labels
+    returns: features, label
     '''
-    
-    num_categories = len(categories)
 
     # if needed standarize the file names
     if file_standardize:
-        for filename in os.listdir(dir):
-            os.rename(dir + filename, dir + filename.replace(" ", "_").lower())
-            
-    if sample:
-        categories = categories[: (num_categories//100 * sample) ]
-        print(f"Loading {num_categories//100 * sample} categories...")
-    else:
-        print(f"Loading {num_categories} categories...")
-    
-    # iterate over all files in the dirs and add to a dataframe
-    
-    features = []
-    labels = []
+        os.rename(dir + category, dir + category.replace(" ", "_").lower())
 
-    for cat in tqdm(categories, desc="Loading data"):
-        data = np.load(os.path.join(dir + cat))
-        features.append(data)
-        labels.extend([cat] * len(data)) # repeat the label for each image, add list to list
+    features = np.load(os.path.join(dir + category))
+    label = category
+    
+    if verbose:
+        print(f"Loaded              Label: {label} | Features: ({len(features)})")
         
-    features = np.vstack(features)
-    labels = np.array(labels)
-    
-    print(f"Data loaded, size: {features.shape}")
-    return features, labels
+    return features, label
 
 
 
 
-def process_data(features_p1: np.array, features_p2: np.array, labels_p1: np.array, labels_p2: np.array, reshape_size: tuple = (-1, 28, 28), portion: float = None):
-    
+def process_data(features: np.array, label: str, reshape_size: tuple = (-1, 28, 28), portion: float = None, verbose: bool = False):
+
     '''
-    Process the data
+    Process data by portioning if needed and reshaping
     
     args:
-    - features_p1: numpy array with the features of the first dataset
-    - features_p2: numpy array with the features of the second dataset
-    - labels_p1: numpy array with the labels of the first dataset
-    - labels_p2: numpy array with the labels of the second dataset
-    - reshape_size: size to reshape the features (this reshapes the flat array into a 2D array (image) with the specified size)
-    - portion: portion of the data to use (this portions the data, removing some layers, leave empty to use all the data)
+    - features: features
+    - label: label
+    - reshape_size: reshape size
+    - portion: portion of the data
     
-    returns: features, labels
+    returns: features, label
     '''
-    
-    assert len(features_p1) == len(labels_p1)
-    assert len(features_p2) == len(labels_p2)
 
     if portion:
-        mask_p1 = np.random.rand(len(features_p1)) <= portion # mask for datast, portion false
-        mask_p2 = np.random.rand(len(features_p2)) <= portion
-        
-        features_p1 = features_p1[mask_p1]
-        features_p2 = features_p2[mask_p2]
-        labels_p1 = labels_p1[mask_p1]
-        labels_p2 = labels_p2[mask_p2]
-
-    # keeping masked data
-    features = np.concatenate([features_p1, features_p2], axis=0)
-    labels = np.concatenate([labels_p1, labels_p2], axis=0)
+        # mask for datast, portion false, masked to remove data
+        mask = np.random.rand(len(features)) <= portion 
+        features = features[mask]
+        print(f"Portioned size:     Features: {len(features)}")
 
     # reshaping the features
     features = features.reshape(reshape_size)
+
+    if verbose:
+        print(f"Processed           Label: {label} | Features: {features.shape}")
     
-    # label renaming remove .npy
-    labels = [label.split(".")[0] for label in labels]
+    return features, label
+
+
+
+
+def augment_data(features: np.array, label: str, rot: int = 0, h_flip: bool = False, v_flip: bool = False, verbose: bool = False):
     
-
-    print(f"Original size: {len(labels_p1) + len(labels_p2)}")
-    print(f"Reduced size: {len(labels)}")
-    
-    return features, labels
-
-
-
-
-
-# def to_tensors_split(features: np.array, labels: np.array, device: str = 'cpu'):
-#     '''
-#     Normalize objects convert the features and labels into tensor objects
-    
-#     args:
-#     - features: numpy array with the features
-#     - labels: numpy array with the labels
-#     - device: device to use
-    
-#     returns: features, labels
-#     '''
-    
-#     print(f"Converting {len(labels)} images to tensors, using {device}...")
-    
-#     labels_map = {label: i for i, label in enumerate(set(labels))}
-        
-#     labels = [labels_map[label] for label in labels] # convert labels to integers
-    
-#     features = torch.tensor(features).to(device) / 255.0 # normalizing 0-255 -> 0-1
-#     features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
-#     labels = torch.tensor(labels).to(device)
-    
-#     print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
-    
-#     return features, labels, labels_map
-
-
-
-
-def batched_tesors_split(feature: np.array, labels: np.array, device: str = 'cpu', batch_size: int = 64):
-    pass
-
-
-
-
-def to_tensors(features: np.array, labels: np.array, device: str = 'cpu'):
     '''
-    Normalize objects convert the features and labels into tensor objects
+    Augment the data by rotating, flipping horizontally and vertically
     
     args:
-    - features: numpy array with the features
-    - labels: numpy array with the labels
+    - features: features
+    - label: label
+    - rot: rotation angle
+    - h_flip: horizontal flip
+    - v_flip: vertical flip
+    
+    returns: augmented features, label
+    '''
+    
+    augmented_features = [features]
+    
+    # rotating image by `rot` degrees
+    if rot:
+        print(f"Rotating images by {rot} degrees...")
+        rotated_features = np.array(rotate(features, rot, reshape=False))
+        augmented_features.append(rotated_features) # append the rotated images to the list of augmented
+        
+    # flipping image horizontally
+    if h_flip:
+        print("Flipping images horizontally...")
+        hflipped_features = np.array(np.fliplr(features))
+        augmented_features.append(hflipped_features)
+        
+    # flipping image vertically
+    if v_flip:
+        print("Flipping images vertically...")
+        vflipped_features = np.array(np.flipud(features))
+        augmented_features.append(vflipped_features)
+    
+    augmented_features = np.concatenate(augmented_features)
+    
+    if verbose:
+        print(f'Augmented           Original: {features.shape} | Augmented: {len(augmented_features)}')
+        
+    return augmented_features, label
+
+
+
+
+def to_tensors(features: np.array, label: str, labels_map: dict, device: str = 'cpu', verbose: bool = False):
+    
+    '''
+    Transform the features and labels to tensors
+    
+    args:
+    - features: features
+    - label: label
+    - labels_map: labels map
     - device: device to use
     
     returns: features, labels
     '''
     
-    print(f"Converting {len(labels)} images to tensors, using {device}...")
-    
-    labels_map = {label: i for i, label in enumerate(set(labels))}
-        
-    labels = [labels_map[label] for label in labels] # convert labels to integers
+    label = labels_map[label]
     
     features = torch.tensor(features).to(device) / 255.0 # normalizing 0-255 -> 0-1
     features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
-    labels = torch.tensor(labels).to(device)
     
-    print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
+    labels = np.array([label] * len(features))
+    labels = torch.tensor(labels, dtype=torch.long).to(device)
     
-    return features, labels, labels_map
+    if verbose:
+        print(f"Tensored            Label: {labels} {labels.shape}| Features: {features.shape} | Device: {device}")
+    
+    return features, labels
 
 
 
 
-
-def augment_data(features: np.array, labels: np.array, rot: int = 0, h_flip: bool = False, v_flip: bool = False) -> tuple:
+def split_batch(features: np.array, labels: np.array, batch_size: int = 64, verbose: bool = False):
     
     '''
-    Augment the data using the following optional techniques:
-    - Rotating the image by `angle` degrees
-    - Flipping the image horizontally
-    - Flipping the image vertically
+    Split the data into train, test and validation sets, then wrap them in DataLoader
     
     args:
-    features: numpy array with the features
-    labels: numpy array with the labels
-    rot: rotate the image by angle
-    h_flip: flip the image horizontally
-    v_flip: flip the image vertically
-    
-    returns: augmented features and labels
-    '''
-    
-    print(f'Starting size: {features.shape}')
-    
-    augmented_features = [features]
-    augmented_labels = [labels]
-
-    
-    # rotating image by `rot` degrees
-    if rot:
-        print(f"Rotating images by {rot} degrees...")
-        rotated_features = np.array([rotate(img, rot, reshape=False) for img in tqdm(features, desc="Rotating images...")])
-        augmented_features.append(rotated_features) # append the rotated images to the list of augmented
-        augmented_labels.append(labels) # append the labels to the list of augmented
-        
-    # flipping image horizontally
-    if h_flip:
-        print("Flipping images horizontally...")
-        hflipped_features = np.array([np.fliplr(img) for img in tqdm(features, desc="Flipping images horizontally...")])
-        augmented_features.append(hflipped_features)
-        augmented_labels.append(labels)
-        
-    # flipping image vertically
-    if v_flip:
-        print("Flipping images vertically...")
-        vflipped_features = np.array([np.flipud(img) for img in tqdm(features, desc="Flipping images vertically...")])
-        augmented_features.append(vflipped_features)
-        augmented_labels.append(labels)
-    
-    augmented_features = np.concatenate(augmented_features)
-    augmented_labels = np.concatenate(augmented_labels)
-    
-    print(f'Augmented size: {augmented_features.shape}')
-    return augmented_features, augmented_labels
-
-
-
-
-def split_batch(features: np.array, labels: np.array, batch_size: int = 64):
-    
-    '''
-    Split the dataframe into train, test, and validation sets
-    Turn the sets into DataLoader objects
-    
-    args:
-    - features: numpy array with the features
-    - labels: numpy array with the labels
-    - batch_size: size of the batch
+    - features: features
+    - labels: labels
+    - batch_size: batch size
     
     returns: train_loader, test_loader, val_loader
     '''
-    
-    print(f"Splitting {features.shape} images into train, test, and validation sets...")
     
     X_train, X_temp, y_train, y_temp = train_test_split(features, labels, test_size=0.2, random_state=0)
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=0)
@@ -252,11 +170,10 @@ def split_batch(features: np.array, labels: np.array, batch_size: int = 64):
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     
-    #sizes
-    print(f"Train size: {len(train_loader.dataset)} \nValidation size: {len(val_loader.dataset)} \nTest size: {len(test_loader.dataset)}")
+    if verbose:
+        print(f"Split               Train: {len(train_loader)} | Val: {len(val_loader)} | Test: {len(test_loader)}")
     
     return train_loader, test_loader, val_loader
-
 
 
 
