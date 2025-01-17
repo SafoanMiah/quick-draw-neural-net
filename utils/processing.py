@@ -104,32 +104,37 @@ def process_data(features_p1: np.array, features_p2: np.array, labels_p1: np.arr
 
 
 
-def to_tensors_split(features: np.array, labels: np.array, device: str = 'cpu'):
-    '''
-    Normalize objects convert the features and labels into tensor objects
+# def to_tensors_split(features: np.array, labels: np.array, device: str = 'cpu'):
+#     '''
+#     Normalize objects convert the features and labels into tensor objects
     
-    args:
-    - features: numpy array with the features
-    - labels: numpy array with the labels
-    - device: device to use
+#     args:
+#     - features: numpy array with the features
+#     - labels: numpy array with the labels
+#     - device: device to use
     
-    returns: features, labels
-    '''
+#     returns: features, labels
+#     '''
     
-    print(f"Converting {len(labels)} images to tensors, using {device}...")
+#     print(f"Converting {len(labels)} images to tensors, using {device}...")
     
-    labels_map = {label: i for i, label in enumerate(set(labels))}
+#     labels_map = {label: i for i, label in enumerate(set(labels))}
         
-    labels = [labels_map[label] for label in labels] # convert labels to integers
+#     labels = [labels_map[label] for label in labels] # convert labels to integers
     
-    features = torch.tensor(features).to(device) / 255.0 # normalizing 0-255 -> 0-1
-    features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
-    labels = torch.tensor(labels).to(device)
+#     features = torch.tensor(features).to(device) / 255.0 # normalizing 0-255 -> 0-1
+#     features = features.unsqueeze(1) # adding channel dimension for CNN, 1 channel for grayscale
+#     labels = torch.tensor(labels).to(device)
     
-    print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
+#     print(f"Features shape: {features.shape}, Labels shape: {labels.shape}")
     
-    return features, labels, labels_map
+#     return features, labels, labels_map
 
+
+
+
+def batched_tesors_split(feature: np.array, labels: np.array, device: str = 'cpu', batch_size: int = 64):
+    pass
 
 
 
