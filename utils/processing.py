@@ -164,16 +164,11 @@ def split_batch(features: np.array, labels: np.array, batch_size: int = 64, verb
     train_dataset = TensorDataset(X_train, y_train)
     val_dataset = TensorDataset(X_val, y_val)
     test_dataset = TensorDataset(X_test, y_test)
-
-    # Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     
     if verbose:
-        print(f"Split               Train: {len(train_loader)} | Val: {len(val_loader)} | Test: {len(test_loader)}")
+        print(f"Split               Train: {len(train_dataset)} | Val: {len(val_dataset)} | Test: {len(test_dataset)}")
     
-    return train_loader, test_loader, val_loader
+    return train_dataset, val_dataset, test_dataset
 
 
 
