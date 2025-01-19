@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from scipy.ndimage import rotate
 
-from torch.utils.data import DataLoader, TensorDataset, ConcatDataset
+from torch.utils.data import DataLoader, TensorDataset, ConcatDataset, Dataset
 import torch
 from tqdm import tqdm
 
@@ -208,3 +208,16 @@ def incremental_save(base_path, data = None, seperator="."):
         print(f"Path: {save_path}")
         
     return save_path
+
+
+
+
+
+def partition_datasets(dataset_list, num_partitions):
+    """
+    Partition the dataset list into `num_partitions` random subsets.
+    """
+    concatenated = ConcatDataset(dataset_list)
+    dataset_size = len(concatenated) // num_partitions
+    subsets = torch.utils.data.random_split(concatenated, [dataset_size] * num_partitions + [len(concatenated) % num_partitions])
+    return subsets[:num_partitions]
