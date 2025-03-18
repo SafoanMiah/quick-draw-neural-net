@@ -88,5 +88,3 @@ The `QuickDrawCNN_V2 XL` model, trained on an augmented dataset, demonstrated th
 - [Quick Draw Dataset](https://quickdraw.withgoogle.com/data)
 - [Kaggle Competition](https://www.kaggle.com/competitions/quickdraw-doodle-recognition)
 - [Aleksandra Deis](https://www.kaggle.com/code/aleksandradeis/getting-started-with-pytorch-for-quick-draw)
-
-_Note: The accuracies may vary slightly on re-runs due to the stochastic nature of training._
