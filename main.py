@@ -1,3 +1,13 @@
+########################################
+# NOTE THIS IS FULL VERSION WORK IN PROGRESS
+# IM ATTEMPTING DIFFERENT METHODS AS I KEEP RUNNING INTO A PROBLEM
+# NOT ENOUGH VRAM!
+
+# THE notebook.ipynb IS COMPLETE SO PLEASE REFER TO THAT FOR NOW
+# AND NOT main.py   utils/   data/
+########################################
+
+
 import torch
 import os
 import pickle
